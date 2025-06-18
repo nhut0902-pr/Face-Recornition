@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analysis Suite Pro (Client-Side)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="title-container">
+                <h1><i class="fa-solid fa-brain-circuit"></i> AI Analysis Suite</h1>
+                <p>Nền tảng phân tích hình ảnh thông minh</p>
+            </div>
+            <div class="header-actions">
+                <button id="voice-command-btn" title="Điều khiển bằng giọng nói"><i class="fa-solid fa-microphone"></i></button>
+                <div class="theme-switcher">
+                    <i class="fa-solid fa-sun"></i>
+                    <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label>
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+            </div>
+        </header>
+
+        <nav class="main-tabs">
+            <button class="tab-link active" data-tab="tab-analysis">Phân tích</button>
+            <button class="tab-link" data-tab="tab-history">Lịch sử</button>
+            <button class="tab-link" data-tab="tab-compare">So sánh</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <!-- TAB 1: ANALYSIS -->
+            <div id="tab-analysis" class="tab-content active">
+                <div class="main-grid">
+                    <section class="card">
+                        <h2><i class="fa-solid fa-database"></i> Cơ sở dữ liệu Khuôn mặt</h2>
+                        <div class="form-group">
+                            <input type="text" id="person-name" placeholder="Nhập tên người">
+                            <button id="add-from-camera-btn" class="camera-btn"><i class="fa-solid fa-camera"></i> Chụp</button>
+                            <input type="file" id="known-face-file" class="hidden-file-input">
+                            <button onclick="document.getElementById('known-face-file').click()" class="file-btn"><i class="fa-solid fa-upload"></i> Tải tệp</button>
+                        </div>
+                        <div id="known-faces-list" class="image-grid"></div>
+                    </section>
+                    <section class="card">
+                        <h2><i class="fa-solid fa-image"></i> Ảnh cần Phân tích</h2>
+                        <div class="form-group">
+                            <button id="recognize-from-camera-btn" class="camera-btn"><i class="fa-solid fa-camera"></i> Chụp</button>
+                            <input type="file" id="images-to-recognize" class="hidden-file-input" multiple>
+                            <button onclick="document.getElementById('images-to-recognize').click()" class="file-btn"><i class="fa-solid fa-upload"></i> Tải tệp</button>
+                        </div>
+                        <div id="image-preview" class="image-grid"></div>
+                    </section>
+                </div>
+                <div class="action-section">
+                    <button id="recognize-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Phân tích Hàng loạt</button>
+                    <button id="real-time-btn" class="real-time-btn"><i class="fa-solid fa-bolt"></i> Nhận diện Real-time</button>
+                </div>
+                <section id="results-section" class="card hidden">
+                    <h2><i class="fa-solid fa-square-poll-vertical"></i> Kết quả Phân tích</h2>
+                    <div id="results" class="results-grid"></div>
+                </section>
+            </div>
+
+            <!-- TAB 2: HISTORY -->
+            <div id="tab-history" class="tab-content">
+                <section class="card">
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử Phân tích</h2>
+                    <p>Tất cả các kết quả phân tích sẽ được lưu tại đây.</p>
+                    <div id="history-grid" class="history-grid">
+                        <p id="history-placeholder">Chưa có lịch sử nào.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB 3: COMPARE -->
+            <div id="tab-compare" class="tab-content">
+                <section class="card">
+                    <h2><i class="fa-solid fa-people-arrows"></i> So sánh Hai Khuôn mặt</h2>
+                    <p>Tải lên hai ảnh để AI so sánh mức độ tương đồng.</p>
+                    <div class="compare-container">
+                        <div class="compare-box">
+                            <img id="compare-img-1" src="https://via.placeholder.com/200" alt="Ảnh 1">
+                            <input type="file" id="compare-file-1" class="hidden-file-input" accept="image/*">
+                            <button onclick="document.getElementById('compare-file-1').click()"><i class="fa-solid fa-upload"></i> Chọn ảnh 1</button>
+                        </div>
+                        <div class="compare-box">
+                            <img id="compare-img-2" src="https://via.placeholder.com/200" alt="Ảnh 2">
+                            <input type="file" id="compare-file-2" class="hidden-file-input" accept="image/*">
+                            <button onclick="document.getElementById('compare-file-2').click()"><i class="fa-solid fa-upload"></i> Chọn ảnh 2</button>
+                        </div>
+                    </div>
+                    <div class="action-section">
+                        <button id="compare-btn"><i class="fa-solid fa-magnifying-glass-chart"></i> Bắt đầu So sánh</button>
+                    </div>
+                    <div id="compare-result" class="hidden"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="camera-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">Chụp ảnh</h2>
+            <div class="camera-container"><video id="camera-view" autoplay playsinline></video><div id="real-time-overlay"></div></div>
+            <canvas id="camera-canvas" class="hidden"></canvas>
+            <div id="modal-status"></div>
+            <div class="modal-actions">
+                <button id="capture-btn">Chụp</button><button id="use-photo-btn" class="hidden">Dùng ảnh này</button><button id="cancel-camera-btn">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="profile-modal-title">Profile</h2>
+            <div id="profile-modal-body"></div>
+            <div class="modal-actions"><button id="close-profile-btn">Đóng</button></div>
+        </div>
+    </div>
+    
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">Đang xử lý...</p>
+    </div>
+
+    <!-- Thư viện jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
