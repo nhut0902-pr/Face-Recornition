@@ -1,0 +1,11 @@
+# netlify.toml
+[build]
+  # Thư mục chứa các tệp frontend (index.html, style.css, ...)
+  publish = "src" 
+  # Thư mục chứa các hàm serverless
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
