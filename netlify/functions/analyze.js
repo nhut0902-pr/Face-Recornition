@@ -1,58 +1,57 @@
-// netlify/functions/analyze.js
+// File: netlify/functions/analyze.js
+
+// Dùng 'node-fetch' để gọi API từ backend. Cần cài đặt nó.
+// Hãy chạy lệnh: npm init -y && npm install node-fetch@2
+const fetch = require('node-fetch');
 
 exports.handler = async function (event, context) {
-    // Chỉ cho phép yêu cầu POST
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
+  // Chỉ cho phép phương thức POST
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  try {
+    // Lấy API Key từ biến môi trường đã lưu trên Netlify
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    if (!GEMINI_API_KEY) {
+        throw new Error('API Key không được thiết lập trên Netlify.');
     }
 
-    try {
-        // Lấy API key từ Biến Môi trường (an toàn trên Netlify)
-        const API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
+    // URL của Google Gemini API
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
-        if (!API_KEY) {
-            return { statusCode: 500, body: JSON.stringify({ error: 'API Key chưa được cấu hình trên server.' }) };
-        }
+    // Lấy nội dung mà trình duyệt gửi lên (chính là object { contents: [...] })
+    const requestBody = JSON.parse(event.body);
 
-        // Parse dữ liệu 'parts' từ body của request mà frontend gửi lên
-        const { parts } = JSON.parse(event.body);
+    // Gọi đến API của Gemini từ server của Netlify
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody), // Gửi tiếp nội dung nhận được
+    });
 
-        if (!parts) {
-            return { statusCode: 400, body: JSON.stringify({ error: 'Không có dữ liệu "parts" để phân tích.' }) };
-        }
-
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
-        
-        const geminiResponse = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts }],
-                generationConfig: {
-                    response_mime_type: "application/json",
-                }
-            })
-        });
-
-        if (!geminiResponse.ok) {
-            const errorData = await geminiResponse.json();
-            throw new Error(errorData.error.message);
-        }
-
-        const data = await geminiResponse.json();
-
-        // Trả kết quả thành công về lại cho frontend
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        };
-
-    } catch (error) {
-        console.error('Lỗi trong Netlify Function:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: `Lỗi Serverless Function: ${error.message}` })
-        };
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Trả lỗi về cho trình duyệt
+      return {
+        statusCode: response.status,
+        body: JSON.stringify(errorData),
+      };
     }
+
+    const data = await response.json();
+
+    // Trả kết quả thành công về cho trình duyệt
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    };
+
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message }),
+    };
+  }
 };
